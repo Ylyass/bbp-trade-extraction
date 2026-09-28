@@ -1,0 +1,21 @@
+{
+  "name": "bbp-trade-extraction",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @bbp/web",
+    "build": "npm run build --workspace @bbp/web",
+    "typecheck": "npm run typecheck --workspace @bbp/web",
+    "test": "npm run test --workspace @bbp/web",
+    "token:generate": "node scripts/generate-token.mjs",
+    "test:db": "node scripts/test-database.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  }
+}

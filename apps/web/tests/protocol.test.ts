@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {identitySchema,syncSchema,tokenPattern} from '../lib/protocol';
+const identity={platform:'MT5',collectorVersion:'0.1.0',brokerServer:'Demo-Server',accountLogin:'9007199254740993',currency:'USD'};
+test('source login preserves integers larger than JS safe range',()=>assert.equal(identitySchema.parse(identity).accountLogin,identity.accountLogin));
+test('reject unsupported platforms, numeric logins and extra fields',()=>{for(const value of [{...identity,platform:'MT4'},{...identity,accountLogin:123},{...identity,studentId:'spoof'}])assert.equal(identitySchema.safeParse(value).success,false);});
+test('snapshot requires finite values and UTC timestamp',()=>{const snapshot={capturedAt:'2026-09-22T10:00:00Z',balance:1000,equity:987.42};assert.ok(syncSchema.safeParse({...identity,snapshot}).success);assert.equal(syncSchema.safeParse({...identity,snapshot:{...snapshot,equity:Infinity}}).success,false);assert.equal(syncSchema.safeParse({...identity,snapshot:{...snapshot,capturedAt:'yesterday'}}).success,false);});
+test('token syntax rejects placeholders and header injection',()=>{assert.ok(tokenPattern.test('BBP_'+'a'.repeat(43)));assert.equal(tokenPattern.test('BBP_replace_me'),false);assert.equal(tokenPattern.test('BBP_'+'a'.repeat(43)+'\r\nX: y'),false);});
