@@ -1,5 +1,5 @@
 #property strict
-#property version "0.10"
+#property version "0.200"
 #property description "BBP read-only account snapshot collector. No trade execution."
 
 input string ApiOrigin="https://api.example.invalid";
@@ -26,7 +26,7 @@ string Quote(string value)
 }
 string Identity()
 {
- return "\"platform\":\"MT5\",\"collectorVersion\":\"0.1.0\",\"accountLogin\":"+Quote(initial_login)+
+ return "\"platform\":\"MT5\",\"collectorVersion\":\"0.2.0\",\"accountLogin\":"+Quote(initial_login)+
         ",\"brokerServer\":"+Quote(initial_server)+",\"currency\":"+Quote(AccountInfoString(ACCOUNT_CURRENCY));
 }
 string UtcNow()
@@ -75,8 +75,10 @@ void OnTimer()
  if(bound && pending=="")
  {
   double balance=AccountInfoDouble(ACCOUNT_BALANCE),equity=AccountInfoDouble(ACCOUNT_EQUITY);
-  if(!MathIsValidNumber(balance)||!MathIsValidNumber(equity)) return;
-  pending="{"+Identity()+",\"snapshot\":{\"capturedAt\":"+Quote(UtcNow())+",\"balance\":"+DoubleToString(balance,8)+",\"equity\":"+DoubleToString(equity,8)+"}}";
+  double floating_pl=AccountInfoDouble(ACCOUNT_PROFIT),margin=AccountInfoDouble(ACCOUNT_MARGIN);
+  double free_margin=AccountInfoDouble(ACCOUNT_MARGIN_FREE),margin_level=AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
+  if(!MathIsValidNumber(balance)||!MathIsValidNumber(equity)||!MathIsValidNumber(floating_pl)||!MathIsValidNumber(margin)||!MathIsValidNumber(free_margin)||!MathIsValidNumber(margin_level)) return;
+  pending="{"+Identity()+",\"snapshot\":{\"capturedAt\":"+Quote(UtcNow())+",\"balance\":"+DoubleToString(balance,8)+",\"equity\":"+DoubleToString(equity,8)+",\"floatingPl\":"+DoubleToString(floating_pl,8)+",\"margin\":"+DoubleToString(margin,8)+",\"freeMargin\":"+DoubleToString(free_margin,8)+",\"marginLevel\":"+DoubleToString(margin_level,8)+"}}";
  }
  int code=Send(endpoint,bound?pending:"{"+Identity()+"}");
  if(code>=200 && code<300)

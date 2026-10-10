@@ -17,5 +17,14 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "sharp": "^0.35.5",
+    "source-map-js": "^1.2.2"
+  },
+  "overrides": {
+    "sharp": "0.35.5",
+    "source-map-js": "1.2.2"
   }
 }
