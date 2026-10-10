@@ -21,9 +21,9 @@ This adds storage for open positions and closed deal events. The existing v0.200
 
 Students use email confirmation links, not a Gmail code.
 
-1. In Supabase, open **Authentication** and find **SMTP Settings**.
-2. Configure a production mail sender (for example, Resend, Postmark, or your own SMTP service).
-3. Set the Site URL to your production BBP Vercel URL.
+1. In Supabase, open **Authentication → Email → SMTP Settings** and enable **Custom SMTP**.
+2. A simple choice is Resend: create and verify a sending domain, then create an API key. Enter host `smtp.resend.com`, port `465`, username `resend`, and the API key as the password. Use a verified `From` address such as `BBP Desk <no-reply@your-domain>`.
+3. In **Authentication → URL Configuration**, set the Site URL to your production BBP Vercel URL.
 4. Add the same URL plus `https://your-domain/auth/confirm` to the allowed redirect URLs.
 5. Send one test confirmation email to an address that is not a Supabase team member.
 
