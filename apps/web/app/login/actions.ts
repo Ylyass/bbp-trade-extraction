@@ -33,8 +33,9 @@ export async function authenticateStudent(formData: FormData) {
   const supabase = await createClient();
   if (mode === 'signup') {
     const name = String(formData.get('name') || '').trim();
-    const {error} = await supabase.auth.signUp({email, password, options: {data: {name}, emailRedirectTo: await confirmationUrl()}});
+    const {data, error} = await supabase.auth.signUp({email, password, options: {data: {name}, emailRedirectTo: await confirmationUrl()}});
     if (error) redirect(loginUrl('signup', 'error', isEmailDeliveryError(error.message) ? 'email' : 'signup'));
+    if (data.session) redirect('/dashboard');
     redirect('/login?mode=signup&message=check-email');
   }
 
