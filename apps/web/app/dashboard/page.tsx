@@ -2,6 +2,7 @@ import Link from 'next/link';
 import {Icon} from '@/components/Icon';
 import {ConnectionStatus, EquityChart, MetricCard} from '@/components/workspace/DashboardWidgets';
 import {accountProfile, age, getWorkspace, isLive, money, percent} from '@/lib/workspace';
+import {createClient} from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,10 +17,12 @@ export default async function Dashboard() {
   const offlineStudents = studentAccounts.filter((account) => !isLive(account)).length;
 
   if (workspace.role === 'admin') {
+    const supabase = await createClient();
+    const {count: registeredStudents} = await supabase.from('profiles').select('*', {count: 'exact', head: true}).eq('role', 'student');
     return <section className="dashboard-page">
       <header className="page-heading mentor-heading"><div><p>Mentor overview</p><h1>See the group clearly.</h1><span>Student accounts, connection health and the latest account data in one place.</span></div><Link className="primary-link" href="/dashboard/students"><Icon name="users" size={17}/>Manage students</Link></header>
       <section className="metric-grid mentor-metric-grid">
-        <MetricCard label="Students" value={String(new Set(studentAccounts.map((account) => account.student_id)).size)} hint="Student accounts connected to BBP" icon="users" />
+        <MetricCard label="Students" value={String(registeredStudents ?? 0)} hint={`${studentAccounts.length} MT5 account${studentAccounts.length === 1 ? '' : 's'} connected to BBP`} icon="users" />
         <MetricCard label="Reporting now" value={String(onlineStudents)} hint="Updated within the last 2 minutes" icon="activity" tone="positive" />
         <MetricCard label="Need attention" value={String(offlineStudents)} hint={offlineStudents ? 'Collector is not currently reporting' : 'All student collectors are reporting'} icon="shield" tone={offlineStudents ? 'warning' : undefined} />
       </section>
