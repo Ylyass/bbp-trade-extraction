@@ -4,12 +4,13 @@ import {createHash, randomBytes} from 'node:crypto';
 import {createClient} from '@/lib/supabase/server';
 import {createAdminClient} from '@/lib/supabase/admin';
 
-export type IssueTokenState = {status: 'idle' | 'success' | 'error'; message?: string; token?: string; studentName?: string; expiresAt?: string};
+export type IssueTokenState = {status: 'idle' | 'success' | 'error'; message?: string; token?: string; studentName?: string; expiresAt?: string; canReplace?: boolean};
 export const initialIssueTokenState: IssueTokenState = {status: 'idle'};
 
 export async function issueConnectionToken(_: IssueTokenState, formData: FormData): Promise<IssueTokenState> {
   try {
     const studentId = String(formData.get('studentId') || '');
+    const replaceExisting = formData.get('replaceExisting') === 'true';
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(studentId)) return {status: 'error', message: 'Choose a student first.'};
 
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -29,7 +30,14 @@ export async function issueConnectionToken(_: IssueTokenState, formData: FormDat
 
     const {data: activeToken, error: tokenError} = await admin.from('connection_tokens').select('id,used_at,expires_at').eq('student_id', studentId).is('revoked_at', null).gt('expires_at', new Date().toISOString()).limit(1).maybeSingle();
     if (tokenError) return {status: 'error', message: 'We could not check that student’s token status.'};
-    if (activeToken) return {status: 'error', message: activeToken.used_at ? 'This student already has an active token connected to MT5. Do not create a second one.' : 'This student already has an unused active token. Use that token or revoke it before issuing another.'};
+    if (activeToken?.used_at) return {status: 'error', message: 'This student already has an active token connected to MT5. Do not create a second one.'};
+    if (activeToken && !replaceExisting) return {status: 'error', message: 'An unused token already exists for this student. Its value is intentionally not stored, so it cannot be shown again.', canReplace: true};
+    if (activeToken && replaceExisting) {
+      const {error: revokeError} = await admin.from('connection_tokens').update({revoked_at: new Date().toISOString()}).eq('id', activeToken.id);
+      if (revokeError) return {status: 'error', message: 'We could not replace the unused token. Please try again.'};
+      const {error: revokeAuditError} = await admin.from('audit_log').insert({student_id: studentId, action: 'token_revoked', metadata: {reason: 'mentor_reissued_unused_token'}});
+      if (revokeAuditError) console.error('Token revocation audit entry failed', revokeAuditError);
+    }
 
     const token = `BBP_${randomBytes(32).toString('base64url')}`;
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
