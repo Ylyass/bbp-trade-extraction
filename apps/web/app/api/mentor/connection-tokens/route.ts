@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     if (studentError || !student || student.role !== 'student') return reply({message: 'That student account is not available.'}, 404);
 
     const {data: activeToken, error: tokenError} = await admin.from('connection_tokens').select('id,used_at,expires_at').eq('student_id', studentId).is('revoked_at', null).gt('expires_at', new Date().toISOString()).limit(1).maybeSingle();
-    if (tokenError) return reply({message: 'We could not check that student’s token status.'}, 503);
+    if (tokenError) return reply({message: 'We could not check that studentâ€™s token status.'}, 503);
     if (activeToken?.used_at) return reply({message: 'This student already has an active token connected to MT5. Do not create a second one.'}, 409);
     if (activeToken && !replaceExisting) return reply({message: 'An unused token already exists for this student. Its value is intentionally not stored, so it cannot be shown again.', canReplace: true}, 409);
     if (activeToken && replaceExisting) {

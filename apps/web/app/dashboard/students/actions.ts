@@ -29,7 +29,7 @@ export async function issueConnectionToken(_: IssueTokenState, formData: FormDat
     if (studentError || !student || student.role !== 'student') return {status: 'error', message: 'That student account is not available.'};
 
     const {data: activeToken, error: tokenError} = await admin.from('connection_tokens').select('id,used_at,expires_at').eq('student_id', studentId).is('revoked_at', null).gt('expires_at', new Date().toISOString()).limit(1).maybeSingle();
-    if (tokenError) return {status: 'error', message: 'We could not check that student’s token status.'};
+    if (tokenError) return {status: 'error', message: 'We could not check that studentâ€™s token status.'};
     if (activeToken?.used_at) return {status: 'error', message: 'This student already has an active token connected to MT5. Do not create a second one.'};
     if (activeToken && !replaceExisting) return {status: 'error', message: 'An unused token already exists for this student. Its value is intentionally not stored, so it cannot be shown again.', canReplace: true};
     if (activeToken && replaceExisting) {
